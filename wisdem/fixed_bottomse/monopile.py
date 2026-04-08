@@ -1024,6 +1024,10 @@ class MonopileSE(om.Group):
     def setup(self):
         mod_opt = self.options["modeling_options"]["WISDEM"]["FixedBottomSE"]
 
+        # Resolve ambiguity: both prop and perf promote rho_water, but only
+        # perf's CylinderEnvironment sets a non-zero default (1025).
+        self.set_input_defaults("rho_water", 1025.0, units="kg/m**3")
+
         self.add_subsystem("prop", MonopileSEProp(modeling_options=self.options["modeling_options"]), promotes=["*"])
         self.add_subsystem("perf", MonopileSEPerf(modeling_options=self.options["modeling_options"]), promotes=["*"])
 
