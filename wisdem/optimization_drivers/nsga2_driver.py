@@ -151,17 +151,6 @@ class NSGA2Driver(Driver):
             lower=0.0,
             desc="Distribution index for mutation.",
         )
-        self.options.declare(
-            "compute_pareto",
-            default=True,
-            types=(bool,),
-            desc=(
-                "When True, compute a set of non-dominated points based on all "
-                "given objectives and update it each generation. The "
-                "multi-objective weight and exponents are ignored because the "
-                "algorithm uses all objective values instead of a composite."
-            ),
-        )
 
     def _setup_driver(self, problem):
         """
@@ -310,7 +299,6 @@ class NSGA2Driver(Driver):
 
         pop_size = self.options["pop_size"]
         max_gen = self.options["max_gen"]
-        compute_pareto = self.options["compute_pareto"]
 
         Pc = self.options["Pc"]  # if None, it will be calculated in execute_ga()
         eta_c = self.options["eta_c"]  # if None, it will be calculated in execute_ga()
@@ -367,6 +355,12 @@ class NSGA2Driver(Driver):
         if pop_size == 0:
             pop_size = 10 * count  # 10 per DV DOF
 
+        if pop_size % 2 != 0:
+            raise ValueError(
+                f"NSGA2 requires an even population size, but pop_size={pop_size}. "
+                "Please set pop_size to an even number."
+            )
+
         # generate initial population using Latin Hypercube Sampling
         design_vars_init = lower_bound + (upper_bound - lower_bound) * lhs(
             count,
@@ -407,6 +401,7 @@ class NSGA2Driver(Driver):
             "constrs_fronts": rv[3],
         }
         # create a yaml file at the path
+        os.makedirs(nsga2_output_dir, exist_ok=True)
         write_yaml(nsga2_debug_collection, nsga2_output_dir / "nsga2_debug.yaml")
 
         # iterate over the specified generations
@@ -428,46 +423,28 @@ class NSGA2Driver(Driver):
             write_yaml(nsga2_debug_collection, nsga2_output_dir / "nsga2_debug.yaml")
             print(f"generation: {generation} of {max_gen}")
 
-        if compute_pareto:  # by default we should be doing Pareto fronts -> the whole point of NSGA2
-            # save the non-dominated points
-            self.optimizer_nsga2.sort_data()  # re-sort the data
+        # Save the non-dominated Pareto front — the whole point of NSGA2
+        self.optimizer_nsga2.sort_data()
 
-            # get the fronts and save the first for the driver
-            rv = self.optimizer_nsga2.get_fronts(compute_constrs=True, feasibility_dominates=True)
-            design_vars_fronts = rv[1]
-            objs_fronts = rv[2]
-            constrs_fronts = rv[3]
-            self.desvar_nd = copy.deepcopy(design_vars_fronts[0])
-            self.constr_nd = copy.deepcopy(constrs_fronts[0])
-            self.obj_nd = copy.deepcopy(objs_fronts[0])
+        rv = self.optimizer_nsga2.get_fronts(compute_constrs=True, feasibility_dominates=True)
+        design_vars_fronts = rv[1]
+        objs_fronts = rv[2]
+        constrs_fronts = rv[3]
+        self.desvar_nd = copy.deepcopy(design_vars_fronts[0])
+        self.constr_nd = copy.deepcopy(constrs_fronts[0])
+        self.obj_nd = copy.deepcopy(objs_fronts[0])
 
-            # get the median entry to for the point estimate
-            median_idx = len(design_vars_fronts[0]) // 2
-            desvar_new = design_vars_fronts[0][median_idx, :]
-            # obj_new = objs_fronts[0][median_idx, :]
-            for name in desvars:
-                i, j = self._desvar_idx[name]
-                val = desvar_new[i:j]
-                self.set_design_var(name, val)
-            # run the nonlinear solve with debugging stdio capture
-            with RecordingDebugging(self._get_name(), self.iter_count, self) as rec:
-                self._run_solve_nonlinear()
-                rec.abs = 0.0
-                rec.rel = 0.0
-            self.iter_count += 1
-        else:
-            # pull optimal parameters back into framework and re-run, so that
-            # framework is left in the right final state
-            for name in desvars:
-                i, j = self._desvar_idx[name]
-                val = desvar_new[i:j]
-                self.set_design_var(name, val)
-            # run the nonlinear solve with debugging stdio capture
-            with RecordingDebugging(self._get_name(), self.iter_count, self) as rec:
-                self._run_solve_nonlinear()
-                rec.abs = 0.0
-                rec.rel = 0.0
-            self.iter_count += 1
+        # Set framework state to the median Pareto point and re-run
+        median_idx = len(design_vars_fronts[0]) // 2
+        desvar_new = design_vars_fronts[0][median_idx, :]
+        for name in desvars:
+            i, j = self._desvar_idx[name]
+            self.set_design_var(name, desvar_new[i:j])
+        with RecordingDebugging(self._get_name(), self.iter_count, self) as rec:
+            self._run_solve_nonlinear()
+            rec.abs = 0.0
+            rec.rel = 0.0
+        self.iter_count += 1
 
         return False
 
@@ -529,17 +506,10 @@ class NSGA2Driver(Driver):
                     self.get_constraint_values()
                 )  # get the constraint values, which should be all zeros, but since fitness is inf, it hopefully doesn't matter
 
-            if is_single_objective:  # single objective optimization
-                for i in obj_values.values():
-                    obj = i  # first and only key in the dict
-            elif self.options["compute_pareto"]:
+            if is_single_objective:
+                obj = list(obj_values.values())[0]
+            else:
                 obj = np.array([val for val in obj_values.values()]).flatten()
-            else:  # multi-objective
-                raise NotImplementedError("weight-based multi-objective optimization not implemented yet.")
-                obj = []
-                for name, val in obj_values.items():
-                    obj.append(val)
-                obj = np.array(obj)
 
             constr_adjusted = []  # convert all bounds to leq zero
             for name, meta in self._cons.items():

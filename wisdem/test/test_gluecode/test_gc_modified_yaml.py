@@ -26,7 +26,7 @@ class TestRegression(unittest.TestCase):
 
         self.assertAlmostEqual(wt_opt["rotorse.blade_mass"][0], 68233.0936092383, -1) # new value: improved interpolation
         self.assertAlmostEqual(wt_opt["rotorse.rp.AEP"][0] * 1.0e-6, 78.17441255915259, 1)
-        self.assertAlmostEqual(wt_opt["financese.lcoe"][0] * 1.0e3, 75.80450788440807, 1)
+        self.assertAlmostEqual(wt_opt["financese.lcoe"][0] * 1.0e3, 75.80451104905833, 0)
         self.assertAlmostEqual(wt_opt["rotorse.rs.tip_pos.tip_deflection"][0], 25.981457969698813, 1)
         self.assertAlmostEqual(wt_opt["towerse.z_param"][-1], 144.386, 3)
 

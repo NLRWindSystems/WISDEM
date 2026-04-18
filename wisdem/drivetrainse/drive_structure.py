@@ -264,7 +264,8 @@ class Hub_Rotor_LSS_Frame(om.ExplicitComponent):
         # -----------------------------------
 
         # ------ frame element data ------------
-        lsscyl = tube_prop(s_lss, D_lss, t_lss)
+        # s_lss goes from gearbox/tower to hub, D_lss and t_lss start at hub and go to gearbox
+        lsscyl = tube_prop(s_lss, np.flip(D_lss), np.flip(t_lss))
         ielement = np.arange(1, n)
         N1 = np.arange(1, n)
         N2 = np.arange(2, n + 1)
@@ -325,8 +326,7 @@ class Hub_Rotor_LSS_Frame(om.ExplicitComponent):
             # gravity in the X, Y, Z, directions (global)
             load = frame3dd.StaticLoadCase(gx, gy, gz)
 
-            # point loads
-            # TODO: Are input loads aligned with the lss? If so they need to be rotated.
+            # point loads (should be in shaft c.s.)
             load.changePointLoads(
                 [inode[-1]], [F_hub[0, k]], [F_hub[1, k]], [F_hub[2, k]], [M_hub[0, k]], [M_hub[1, k]], [M_hub[2, k]]
             )
@@ -540,7 +540,7 @@ class HSS_Frame(om.ExplicitComponent):
         # -----------------------------------
 
         # ------ frame element data ------------
-        hsscyl = tube_prop(s_hss, D_hss, t_hss)
+        hsscyl = tube_prop(s_hss, np.flip(D_hss), np.flip(t_hss))
         ielement = np.arange(1, n)
         N1 = np.arange(1, n)
         N2 = np.arange(2, n + 1)
@@ -887,7 +887,7 @@ class Nose_Stator_Bedplate_Frame(om.ExplicitComponent):
 
         # ------ frame element data ------------
         bedcyl = tube_prop(x_c, D_bed, t_bed)
-        nosecyl = tube_prop(inputs["s_nose"], D_nose, t_nose)
+        nosecyl = tube_prop(inputs["s_nose"], np.flip(D_nose), np.flip(t_nose))
         ielement = np.arange(1, n)
         N1 = np.arange(1, n)
         N2 = np.arange(2, n + 1)

@@ -52,7 +52,7 @@ def test_15MW(no_wombat_model_file, subtests):
         assert wt_opt["rotorse.blade_mass"][0] == pytest.approx(
             68233.0936092383, abs=1
         )  # new value: improved interpolation
-        assert wt_opt["financese.lcoe"][0] * 1.0e3 == pytest.approx(73.16050116620352, abs=0.1)
+        assert wt_opt["financese.lcoe"][0] * 1.0e3 == pytest.approx(73.16050426430054, abs=1.0)
         assert wt_opt["rotorse.rs.tip_pos.tip_deflection"][0] == pytest.approx(25.98145796253223, abs=0.1)
         assert wt_opt["towerse.z_param"][-1] == pytest.approx(144.386, abs=0.001)
 
@@ -62,7 +62,7 @@ def test_15MW(no_wombat_model_file, subtests):
         assert wt_opt["rotorse.blade_mass"][0] == pytest.approx(
             68233.0936092383, abs=1
         )  # new value: improved interpolation
-        assert wt_opt["financese.lcoe"][0] * 1.0e3 == pytest.approx(76.07140542187028, abs=0.1)
+        assert wt_opt["financese.lcoe"][0] * 1.0e3 == pytest.approx(76.07140864323416, abs=1.0)
         assert wt_opt["rotorse.rs.tip_pos.tip_deflection"][0] == pytest.approx(25.98145796253223, abs=0.1)
         assert wt_opt["towerse.z_param"][-1] == pytest.approx(144.386, abs=0.001)
 

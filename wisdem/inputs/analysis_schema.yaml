@@ -1639,6 +1639,32 @@ properties:
                         type: boolean
                         default: False
                         description: Toggle driver debug printing
+                    pop_size:
+                        type: integer
+                        description: Population size for evolutionary drivers (e.g. NSGA2)
+                        default: 20
+                        minimum: 1
+                    run_parallel:
+                        type: boolean
+                        default: False
+                        description: Toggle parallel model evaluations for evolutionary drivers
+                    seed:
+                        type: integer
+                        description: Random seed for evolutionary drivers
+                        default: 1
+                        minimum: 1
+                    Pc:
+                        type: number
+                        description: Crossover probability for NSGA2
+                        default: 0.9
+                        minimum: 0.0
+                        maximum: 1.0
+                    Pm:
+                        type: number
+                        description: Mutation probability for NSGA2
+                        default: 0.02
+                        minimum: 0.0
+                        maximum: 1.0
             design_of_experiments:
                 type: object
                 description: Specification of the design of experiments driver parameters
