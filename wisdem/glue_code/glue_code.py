@@ -369,12 +369,6 @@ class WT_RNTA(om.Group):
             self.connect("drivetrain.lss_diameter", "drivese.lss_diameter")
             self.connect("drivetrain.lss_wall_thickness", "drivese.lss_wall_thickness")
             self.connect("drivetrain.lss_mass_user", "drivese.lss_mass_user")
-            if modeling_options["WISDEM"]["DriveSE"]["direct"]:
-                self.connect("drivetrain.nose_diameter", "drivese.bear1.D_shaft", src_indices=[0])
-                self.connect("drivetrain.nose_diameter", "drivese.bear2.D_shaft", src_indices=[-1])
-            else:
-                self.connect("drivetrain.lss_diameter", "drivese.bear1.D_shaft", src_indices=[0])
-                self.connect("drivetrain.lss_diameter", "drivese.bear2.D_shaft", src_indices=[-1])
             self.connect("drivetrain.uptower", "drivese.uptower")
             self.connect("drivetrain.brake_mass_user", "drivese.brake_mass_user")
             self.connect("drivetrain.bedplate_mass_user", "drivese.bedplate_mass_user")

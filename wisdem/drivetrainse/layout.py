@@ -40,7 +40,7 @@ def rod_prop(s, Di, ti, rho):
             (1.0 / 12.0) * (3 * 0.25 * (Dm**2 + (Dm - 2 * tm) ** 2) + L**2),
         ]
     )
-    return m, cm, m * I
+    return m, cm, m * I, D, t
 
 
 class Layout(om.ExplicitComponent):
@@ -117,7 +117,10 @@ class Layout(om.ExplicitComponent):
         Margin for drivetrain length and desired overhang distance (should be > 0)
     constr_height : float, [m]
         Margin for drivetrain height and desired hub height (should be > 0)
-
+    D_shaft_mb1 : float, [m]
+        Diameter of shaft (nose/lss) at location of first main bearing
+    D_shaft_mb2 : float, [m]
+        Diameter of shaft (nose/lss) at location of second main bearing
     """
 
     def setup(self):
@@ -159,6 +162,8 @@ class Layout(om.ExplicitComponent):
         self.add_output("hss_I", val=np.zeros(3), units="kg*m**2")
         self.add_output("constr_length", 0.0, units="m")
         self.add_output("constr_height", 0.0, units="m")
+        self.add_output("D_shaft_mb1", 0.0, units="m")
+        self.add_output("D_shaft_mb2", 0.0, units="m")
 
 
 class DirectLayout(Layout):
@@ -230,6 +235,7 @@ class DirectLayout(Layout):
         self.add_output("L_nose", 0.0, units="m")
         self.add_output("D_bearing1", 0.0, units="m")
         self.add_output("D_bearing2", 0.0, units="m")
+        
         self.add_output("s_nose", val=np.zeros(5), units="m")
         self.add_output("nose_mass", val=0.0, units="kg")
         self.add_output("nose_cm", val=0.0, units="m")
@@ -411,24 +417,30 @@ class DirectLayout(Layout):
         outputs["constr_ecc"] = L_bedplate - H_bedplate  # Should be > 0
         # ------------------------------------
 
-        # ------- Nose, lss, and bearing properties ----------------
-        # Now is a good time to set bearing diameters
-        outputs["D_bearing1"] = 0.5 * D_lss[-1] - t_lss[-1] - 0.5 * D_nose[0]
-        outputs["D_bearing2"] = 0.5 * D_lss[-1] - t_lss[-1] - 0.5 * D_nose[-1]
-
         # Compute center of mass based on area
-        m_nose, cm_nose, I_nose = rod_prop(s_nose, D_nose, t_nose, bedplate_rho)
+        m_nose, cm_nose, I_nose, Ds_nose, ts_nose = rod_prop(s_nose, D_nose, t_nose, bedplate_rho)
         outputs["nose_mass"] = m_nose
         outputs["nose_cm"] = cm_nose
         outputs["nose_I"] = I_nose
 
-        m_lss, cm_lss, I_lss = rod_prop(s_lss, D_lss, t_lss, lss_rho)
+        m_lss, cm_lss, I_lss, Ds_lss, ts_lss = rod_prop(s_lss, D_lss, t_lss, lss_rho)
         if lss_mass_user > 0.0:
             m_lss = lss_mass_user
         outputs["lss_mass"] = m_lss
         outputs["lss_cm"] = cm_lss
         outputs["lss_I"] = I_lss
 
+        # ------- Nose, lss, and bearing properties ----------------
+        # Now is a good time to set bearing diameters
+        D_lss_mb = np.interp([s_mb1, s_mb2], s_lss, Ds_lss)
+        t_lss_mb = np.interp([s_mb1, s_mb2], s_lss, ts_lss)
+        D_nose_mb = np.interp([s_mb1, s_mb2], s_nose, Ds_nose)
+        #t_nose_mb = np.interp(s_nose, ts_nose, [s_mb1, s_mb2])
+        outputs["D_bearing1"] = 0.5 * D_lss_mb[0] - t_lss_mb[0] - 0.5 * D_nose_mb[0]
+        outputs["D_bearing2"] = 0.5 * D_lss_mb[1] - t_lss_mb[1] - 0.5 * D_nose_mb[1]
+        outputs["D_shaft_mb1"]  = D_nose_mb[0]
+        outputs["D_shaft_mb2"]  = D_nose_mb[1]
+        
 
 class GearedLayout(Layout):
     """
@@ -570,7 +582,7 @@ class GearedLayout(Layout):
 
         # ------- hss, lss, and bearing properties ----------------
         # Compute center of mass based on area
-        m_hss, cm_hss, I_hss = rod_prop(s_hss, D_hss, t_hss, hss_rho)
+        m_hss, cm_hss, I_hss, _, _ = rod_prop(s_hss, D_hss, t_hss, hss_rho)
         if hss_mass_user > 0.0:
             m_hss = hss_mass_user
         outputs["hss_mass"] = m_hss
@@ -578,7 +590,7 @@ class GearedLayout(Layout):
         outputs["hss_I"] = I_hss
         outputs["s_hss"] = s_hss
 
-        m_lss, cm_lss, I_lss = rod_prop(s_lss, D_lss, t_lss, lss_rho)
+        m_lss, cm_lss, I_lss, Ds_lss, ts_lss = rod_prop(s_lss, D_lss, t_lss, lss_rho)
         if lss_mass_user > 0.0:
             m_lss = lss_mass_user
         outputs["lss_mass"] = m_lss
@@ -586,6 +598,10 @@ class GearedLayout(Layout):
         outputs["lss_I"] = I_lss
         outputs["s_lss"] = s_lss
 
+        D_lss_mb = np.interp([s_mb1, s_mb2], s_lss, Ds_lss)
+        outputs["D_shaft_mb1"]  = D_lss_mb[0]
+        outputs["D_shaft_mb2"]  = D_lss_mb[1]
+        
         # ------- Bedplate I-beam properties ----------------
         L_bedplate = (L_drive + 0.5 * D_hub) * np.cos(tilt)
         H_bedplate = H_drive - (L_drive + 0.5 * D_hub) * np.sin(tilt)  # Subtract thickness of platform plate
