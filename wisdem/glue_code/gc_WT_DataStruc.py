@@ -507,7 +507,7 @@ class Blade(om.Group):
         opt_var.add_output(
             "twist_opt",
             val=np.ones(opt_options["design_variables"]["blade"]["aero_shape"]["twist"]["n_opt"]),
-            units="deg",
+            units="rad",
         )
         opt_var.add_output(
             "chord_opt",

@@ -1340,7 +1340,7 @@ class PoseOptimization(object):
                 wt_init["components"]["blade"]["outer_shape"]["twist"]["values"],
             )
             init_twist_opt = twist_interpolator(wt_opt["blade.opt_var.s_opt_twist"])
-            wt_opt["blade.opt_var.twist_opt"] = init_twist_opt
+            wt_opt["blade.opt_var.twist_opt"] = np.deg2rad(init_twist_opt)
             wt_opt["blade.opt_var.s_opt_chord"] = np.linspace(0.0, 1.0, blade_opt["aero_shape"]["chord"]["n_opt"])
             chord_interpolator = PchipInterpolator(
                 wt_init["components"]["blade"]["outer_shape"]["chord"]["grid"],
