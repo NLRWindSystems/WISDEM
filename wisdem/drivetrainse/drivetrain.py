@@ -255,6 +255,8 @@ class DrivetrainSE(om.Group):
         if direct:
             self.connect("D_bearing1", "bear1.D_bearing")
             self.connect("D_bearing2", "bear2.D_bearing")
+        self.connect("D_shaft_mb1", "bear1.D_shaft")
+        self.connect("D_shaft_mb2", "bear2.D_shaft")
 
         self.connect("bear1.mb_mass", "mb1_mass")
         self.connect("bear1.mb_I", "mb1_I")
