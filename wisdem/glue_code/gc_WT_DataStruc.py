@@ -715,6 +715,16 @@ class Blade(om.Group):
         # Import outer shape BEM
         self.add_subsystem("outer_shape", Blade_Outer_Shape(rotorse_options=rotorse_options))
 
+        # Interpolate airfoil profiles and coordinates
+        self.add_subsystem(
+            "interp_airfoils",
+            Blade_Interp_Airfoils(rotorse_options=rotorse_options),
+        )
+        # Connections from oute_shape_bem to interp_airfoils
+        self.connect("outer_shape.s", "interp_airfoils.s")
+        self.connect("outer_shape.rthick_yaml", "interp_airfoils.rthick_yaml")
+        self.connect("opt_var.af_position", "interp_airfoils.af_position")
+        
         # Parametrize blade outer shape
         self.add_subsystem(
             "pa", ParametrizeBladeAero(rotorse_options=rotorse_options, opt_options=opt_options)
@@ -727,21 +737,7 @@ class Blade(om.Group):
         self.connect("outer_shape.s", "pa.s")
         self.connect("outer_shape.chord", "pa.chord_original")
         self.connect("outer_shape.section_offset_y", "pa.section_offset_y")
-
-        # Interpolate airfoil profiles and coordinates
-        self.add_subsystem(
-            "interp_airfoils",
-            Blade_Interp_Airfoils(rotorse_options=rotorse_options),
-        )
-
-        # Connections from oute_shape_bem to interp_airfoils
-        self.connect("outer_shape.s", "interp_airfoils.s")
-        self.connect("outer_shape.rthick_yaml", "interp_airfoils.rthick_yaml")
-        self.connect("pa.chord_param", ["interp_airfoils.chord", "compute_coord_xy_dim.chord"])
-        self.connect(
-            "pa.section_offset_y_param", ["interp_airfoils.section_offset_y", "compute_coord_xy_dim.section_offset_y"]
-        )
-        self.connect("opt_var.af_position", "interp_airfoils.af_position")
+        self.connect("interp_airfoils.ac_interp", "pa.ac_interp")
 
         self.add_subsystem("high_level_blade_props", ComputeHighLevelBladeProperties(rotorse_options=rotorse_options))
         self.connect("ref_axis", "high_level_blade_props.blade_ref_axis_user")
@@ -758,7 +754,8 @@ class Blade(om.Group):
         )
         self.connect("pa.twist_param", "compute_coord_xy_dim.twist")
         self.connect("high_level_blade_props.blade_ref_axis", "compute_coord_xy_dim.ref_axis")
-
+        self.connect("pa.chord_param", "compute_coord_xy_dim.chord")
+        self.connect("pa.section_offset_y_param", "compute_coord_xy_dim.section_offset_y")
         self.connect("interp_airfoils.coord_xy_interp", "compute_coord_xy_dim.coord_xy_interp")
 
         # If the flag is true, generate the 3D x,y,z points of the outer blade shape
@@ -880,15 +877,6 @@ class Blade_Interp_Airfoils(om.ExplicitComponent):
             "s",
             val=np.zeros(n_span),
             desc="1D array of the non-dimensional spanwise grid defined along blade axis (0-blade root, 1-blade tip)",
-        )
-        self.add_input(
-            "section_offset_y",
-            val=np.zeros(n_span),
-            units="m",
-            desc="1D array of the airfoil position relative to the reference axis, specifying the distance in meters along the chordline from the reference axis to the leading edge. 0 means that the airfoil is pinned at the leading edge, a positive offset means that the leading edge is upstream of the reference axis in local chordline coordinates, and a negative offset that the leading edge aft of the reference axis..",
-        )
-        self.add_input(
-            "chord", val=np.zeros(n_span), units="m", desc="1D array of the chord values defined along blade span."
         )
 
         # Airfoil properties

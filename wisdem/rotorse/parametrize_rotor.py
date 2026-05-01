@@ -65,6 +65,11 @@ class ParametrizeBladeAero(om.ExplicitComponent):
             units="m",
             desc="1D array of the airfoil position relative to the reference axis, specifying the distance in meters along the chordline from the reference axis to the leading edge. The distribution is the original from the yaml.",
         )
+        self.add_input(
+            "ac_interp",
+            val=np.zeros(n_span),
+            desc="1D array of the aerodynamic center of the blade defined along span.",
+        )
         # Outputs
         self.add_output(
             "twist_param",
@@ -123,7 +128,8 @@ class ParametrizeBladeAero(om.ExplicitComponent):
         outputs["slope_twist_constr"] = slope_twist_constr
         # Update section_offset_y
         outputs["section_offset_y_param"] = inputs["section_offset_y"] * outputs["chord_param"] / inputs["chord_original"]
-        
+        # Alternative approach following the aerodynamic center, which probably needs some smoothing first though
+        # outputs["section_offset_y_param"] = inputs["ac_interp"] * outputs["chord_param"]
 
 
 class ParametrizeBladeStruct(om.ExplicitComponent):
