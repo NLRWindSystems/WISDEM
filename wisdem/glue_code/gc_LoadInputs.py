@@ -887,6 +887,18 @@ class WindTurbineOntologyPython(object):
                                 self.wt_init["components"]["blade"]["structure"]["anchors"][j][anchor_handle]["values"] = wt_opt[
                                     "blade.structure.layer_start_nd"
                                 ][i, :].tolist()
+                                if "width" in self.wt_init["components"]["blade"]["structure"]["anchors"][j]:
+                                    self.wt_init["components"]["blade"]["structure"]["anchors"][j]["width"]["grid"] = wt_opt[
+                                        "blade.outer_shape.s"
+                                    ].tolist()
+                                    self.wt_init["components"]["blade"]["structure"]["anchors"][j]["width"]["values"] = wt_opt[
+                                        "blade.structure.layer_width_adjusted"
+                                    ][i, :].tolist()
+                                if "plane_intersection" in self.wt_init["components"]["blade"]["structure"]["anchors"][j]:
+                                    self.wt_init["components"]["blade"]["structure"]["anchors"][j]["plane_intersection"]["offset"]["grid"] = wt_opt["blade.outer_shape.s"].tolist()
+                                    self.wt_init["components"]["blade"]["structure"]["anchors"][j]["plane_intersection"]["offset"]["values"] = wt_opt[
+                                        "blade.structure.layer_offset_adjusted"
+                                    ][i, :].tolist()
                                 break
                     # Update end_nd_arc for the anchor
                     if "anchor" in self.wt_init["components"]["blade"]["structure"]["layers"][i]["end_nd_arc"]:
@@ -900,6 +912,18 @@ class WindTurbineOntologyPython(object):
                                 self.wt_init["components"]["blade"]["structure"]["anchors"][j][anchor_handle]["values"] = wt_opt[
                                     "blade.structure.layer_end_nd"
                                 ][i, :].tolist()
+                                if "width" in self.wt_init["components"]["blade"]["structure"]["anchors"][j]:
+                                    self.wt_init["components"]["blade"]["structure"]["anchors"][j]["width"]["grid"] = wt_opt[
+                                        "blade.outer_shape.s"
+                                    ].tolist()
+                                    self.wt_init["components"]["blade"]["structure"]["anchors"][j]["width"]["values"] = wt_opt[
+                                        "blade.structure.layer_width_adjusted"
+                                    ][i, :].tolist()
+                                if "plane_intersection" in self.wt_init["components"]["blade"]["structure"]["anchors"][j]:
+                                    self.wt_init["components"]["blade"]["structure"]["anchors"][j]["plane_intersection"]["offset"]["grid"] = wt_opt["blade.outer_shape.s"].tolist()
+                                    self.wt_init["components"]["blade"]["structure"]["anchors"][j]["plane_intersection"]["offset"]["values"] = wt_opt[
+                                        "blade.structure.layer_offset_adjusted"
+                                    ][i, :].tolist()
                                 break
                 for i in range(self.modeling_options["WISDEM"]["RotorSE"]["n_webs"]):
                     # Update start_nd_arc for the anchor
@@ -914,6 +938,11 @@ class WindTurbineOntologyPython(object):
                                 self.wt_init["components"]["blade"]["structure"]["anchors"][j][anchor_handle]["values"] = wt_opt[
                                     "blade.structure.web_start_nd"
                                 ][i, :].tolist()
+                                if "plane_intersection" in self.wt_init["components"]["blade"]["structure"]["anchors"][j]:
+                                    self.wt_init["components"]["blade"]["structure"]["anchors"][j]["plane_intersection"]["offset"]["grid"] = wt_opt["blade.outer_shape.s"].tolist()
+                                    self.wt_init["components"]["blade"]["structure"]["anchors"][j]["plane_intersection"]["offset"]["values"] = wt_opt[
+                                        "blade.structure.web_offset_adjusted"
+                                    ][i, :].tolist()
                                 break
                     # Update end_nd_arc for the anchor
                     if "anchor" in self.wt_init["components"]["blade"]["structure"]["webs"][i]["end_nd_arc"]:
@@ -927,6 +956,11 @@ class WindTurbineOntologyPython(object):
                                 self.wt_init["components"]["blade"]["structure"]["anchors"][j][anchor_handle]["values"] = wt_opt[
                                     "blade.structure.web_end_nd"
                                 ][i, :].tolist()
+                                if "plane_intersection" in self.wt_init["components"]["blade"]["structure"]["anchors"][j]:
+                                    self.wt_init["components"]["blade"]["structure"]["anchors"][j]["plane_intersection"]["offset"]["grid"] = wt_opt["blade.outer_shape.s"].tolist()
+                                    self.wt_init["components"]["blade"]["structure"]["anchors"][j]["plane_intersection"]["offset"]["values"] = wt_opt[
+                                        "blade.structure.web_offset_adjusted"
+                                    ][i, :].tolist()
                                 break
 
 
