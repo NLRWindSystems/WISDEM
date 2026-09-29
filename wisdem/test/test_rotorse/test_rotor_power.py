@@ -1,5 +1,6 @@
 import os
 import unittest
+import warnings
 
 import numpy as np
 import openmdao.api as om
@@ -605,6 +606,48 @@ class TestServo(unittest.TestCase):
         myCp = prob["P"] / (0.5 * 1.225 * V_expect1**3.0 * np.pi * 70**2)
         npt.assert_allclose(myCp[Omega_expect == Omega_tsr][:-1], myCp[6])
         npt.assert_allclose(myCp[Omega_expect == Omega_tsr][:-1], prob["Cp"][Omega_expect == Omega_tsr][:-1])
+
+    def testRegulationTrajectory_PeakShavingRegion3(self):
+        # Region 3 points that start above the thrust limit are re-solved with a thrust constraint.
+        # That branch used to assign size-1 arrays into scalar slots, which errors on numpy >= 2.5
+        prob = om.Problem(reports=False)
+
+        (n_span, n_aoa, n_Re) = NPZFILE["airfoils_cl"].shape
+        n_pc = 20
+
+        modeling_options = {}
+        modeling_options["WISDEM"] = {}
+        modeling_options["WISDEM"]["RotorSE"] = {}
+        modeling_options["WISDEM"]["RotorSE"]["n_span"] = n_span
+        modeling_options["WISDEM"]["RotorSE"]["n_aoa"] = n_aoa
+        modeling_options["WISDEM"]["RotorSE"]["n_Re"] = n_Re
+        modeling_options["WISDEM"]["RotorSE"]["regulation_reg_III"] = True
+        modeling_options["WISDEM"]["RotorSE"]["fix_pitch_regI12"] = False
+        modeling_options["WISDEM"]["RotorSE"]["n_pc"] = n_pc
+        modeling_options["WISDEM"]["RotorSE"]["n_pc_spline"] = n_pc
+
+        prob.model.add_subsystem(
+            "powercurve", rp.RegulatedPowerCurve(modeling_options=modeling_options), promotes=["*"]
+        )
+        prob = fillprob(prob, n_pc, n_span)
+
+        prob["omega_max"] = 1e3
+        prob["max_allowable_blade_tip_speed"] = 80.0
+        prob["rated_power"] = 5e6
+        prob["peak_thrust_shaving"] = 1.0
+        prob.run_model()
+        T_peak = max(prob["T"])
+
+        prob["peak_thrust_shaving"] = 0.5
+        with warnings.catch_warnings():
+            # Surface the numpy >= 2.5 error as a failure on older numpy too
+            warnings.filterwarnings("error", message=".*ndim > 0.*", category=DeprecationWarning)
+            prob.run_model()
+
+        # Thrust shaving must have pulled some region 3 points below rated power to meet the thrust limit
+        reg3 = prob["V"] > prob["rated_V"]
+        self.assertTrue(np.any(prob["P"][reg3] < 0.99 * 5e6))
+        npt.assert_array_less(prob["T"][reg3], 1.01 * 0.5 * T_peak)
 
     def testRegulationTrajectory_reindex(self):
         prob = om.Problem(reports=False)

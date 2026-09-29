@@ -6,7 +6,6 @@ More info at https://nlopt.readthedocs.io/
 
 import numpy as np
 from openmdao.core.driver import Driver, RecordingDebugging
-from openmdao.core.constants import INF_BOUND
 from openmdao.utils.mpi import MPI
 
 try:
@@ -267,7 +266,7 @@ class NLoptDriver(Driver):
         else:
             bounds = None
 
-        lower_dv, upper_dv, _ = self._autoscaler.get_bounds_scaling('design_var')
+        dv_bounds = self._autoscaler.get_bounds_scaling('design_var')
 
         for name, meta in self._designvars.items():
             size = meta['global_size'] if meta['distributed'] else meta['size']
@@ -276,15 +275,15 @@ class NLoptDriver(Driver):
 
             # Bounds if our optimizer supports them
             if use_bounds:
-                meta_low = lower_dv[name]
-                meta_high = upper_dv[name]
+                meta_low = dv_bounds[name].lower
+                meta_high = dv_bounds[name].upper
                 for j in range(size):
-                    p_low = meta_low[j]
-                    p_high = meta_high[j]
+                    p_low = None if meta_low is None else meta_low[j]
+                    p_high = None if meta_high is None else meta_high[j]
 
-                    if p_low <= -INF_BOUND:
+                    if p_low is not None and np.isneginf(p_low):
                         p_low = None
-                    if p_high >= INF_BOUND:
+                    if p_high is not None and np.isposinf(p_high):
                         p_high = None
 
                     bounds.append((p_low, p_high))
@@ -315,7 +314,7 @@ class NLoptDriver(Driver):
             else:
                 self._lincongrad_cache = None
 
-            lower_con, upper_con, equals_con = self._autoscaler.get_bounds_scaling('constraint')
+            con_bounds = self._autoscaler.get_bounds_scaling('constraint')
 
             # map constraints to index and instantiate constraints for scipy
             for name, meta in self._cons.items():
@@ -323,9 +322,9 @@ class NLoptDriver(Driver):
                     meta['size'] = size = meta['indices'].indexed_src_size
                 else:
                     size = meta['global_size'] if meta['distributed'] else meta['size']
-                upper = upper_con[name]
-                lower = lower_con[name]
-                equals = equals_con[name] if meta['equals'] is not None else None
+                upper = con_bounds[name].upper
+                lower = con_bounds[name].lower
+                equals = con_bounds[name].equals if meta['equals'] is not None else None
                 linear = name in lincons
 
                 if linear:
@@ -361,13 +360,10 @@ class NLoptDriver(Driver):
                             signature_extender(weak_method_wrapper(self, "_confunc"), args)
                         )
 
-                        if isinstance(upper, np.ndarray):
-                            upper = upper[j]
+                        upper_j = np.inf if upper is None else upper[j]
+                        lower_j = -np.inf if lower is None else lower[j]
 
-                        if isinstance(lower, np.ndarray):
-                            lower = lower[j]
-
-                        dblcon = (upper < INF_BOUND) and (lower > -INF_BOUND)
+                        dblcon = np.isfinite(upper_j) and np.isfinite(lower_j)
 
                         # Add extra constraint if double-sided
                         if dblcon:
@@ -512,7 +508,7 @@ class NLoptDriver(Driver):
         cons = self._con_cache
         meta = self._cons[name]
 
-        lower_con, upper_con, equals_con = self._autoscaler.get_bounds_scaling('constraint')
+        con_bounds = self._autoscaler.get_bounds_scaling('constraint')
 
         if meta["linear"]:
             grad_cache = self._lincongrad_cache
@@ -523,7 +519,7 @@ class NLoptDriver(Driver):
 
         # Equality constraints
         if meta['equals'] is not None:
-            eq = equals_con[name]
+            eq = con_bounds[name].equals
             if grad.size > 0:
                 grad[:] = grad_cache[grad_idx, :]
             return cons[name][idx] - eq[idx]
@@ -539,10 +535,12 @@ class NLoptDriver(Driver):
 
         # Note, NLopt defines constraints to be satisfied when negative,
         # which is the same as OpenMDAO.
-        upper = upper_con[name][idx]
-        lower = lower_con[name][idx]
+        upper_arr = con_bounds[name].upper
+        lower_arr = con_bounds[name].lower
+        upper = np.inf if upper_arr is None else upper_arr[idx]
+        lower = -np.inf if lower_arr is None else lower_arr[idx]
 
-        if dbl or (lower <= -INF_BOUND):
+        if dbl or np.isneginf(lower):
             if grad.size > 0:
                 grad[:] = grad_cache[grad_idx, :]
             return cons[name][idx] - upper

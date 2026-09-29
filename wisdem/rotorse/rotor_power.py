@@ -753,7 +753,7 @@ class ComputePowerCurve(ExplicitComponent):
                     # If we are thrust shaving, then check if this is a point that must be modified
                     if peak_thrust_shaving and T[i] >= max_T:
                         myout, _ = self.ccblade.evaluate(Uhub[i], Omega_rpm[i], pitch0, coefficients=False)
-                        scaling_thrust = 0.1*myout["T"]
+                        scaling_thrust = 0.1*float(myout["T"][0])
                         const = {}
                         const["type"] = "ineq"
                         const["fun"] = lambda x: constr_Tmax(x, Uhub[i], Omega_rpm[i], scaling_thrust)
@@ -771,7 +771,7 @@ class ComputePowerCurve(ExplicitComponent):
 
                         myout, _ = self.ccblade.evaluate([Uhub[i]], [Omega_rpm[i]], [pitch[i]], coefficients=True)
                         P_aero[i], T[i], Q[i], M[i], Cp_aero[i], Ct_aero[i], Cq_aero[i], Cm_aero[i] = [
-                            myout[key] for key in ["P", "T", "Q", "Mb", "CP", "CT", "CQ", "CMb"]
+                            myout[key][0] for key in ["P", "T", "Q", "Mb", "CP", "CT", "CQ", "CMb"]
                         ]
                         eff[i] = np.interp(Omega_rpm[i], lss_rpm, driveEta)
                         P[i] = P_aero[i] * eff[i]

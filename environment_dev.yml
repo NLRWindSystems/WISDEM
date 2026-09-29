@@ -18,10 +18,11 @@ dependencies:
   - ninja
   - nlopt
   - numpy
-  - openmdao
+  - openmdao>=3.45.1
   - openpyxl
   - orbit-nrel>=1.2.5
   - pandas
+  - pydoe
   - pydoe3
   - pyoptsparse
   - pyyaml
