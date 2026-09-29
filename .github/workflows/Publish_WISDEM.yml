@@ -13,12 +13,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-14, macos-15]
+        os: [ubuntu-latest, windows-latest, macos-latest] # No homebrew support for intel macs as of 9/2026
 
     steps:
       - name: Set up QEMU
         if: runner.os == 'Linux'
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
         with:
           platforms: all
         
@@ -43,36 +43,35 @@ jobs:
             mingw-w64-x86_64-gcc-fortran
             
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Build wheels linux
         if: contains( matrix.os, 'ubuntu')
-        uses: pypa/cibuildwheel@v3.1.4
+        uses: pypa/cibuildwheel@v4.2.1
         env:
           CC: ${{ steps.install_cc.outputs.cc }}
           CXX: ${{ steps.install_cc.outputs.cxx }}
-
-      - name: Build wheels mac-14
-        if: contains( matrix.os, 'macos-14')
-        uses: pypa/cibuildwheel@v3.1.4
-        env:
-          CC: ${{ steps.install_cc.outputs.cc }}
-          CXX: ${{ steps.install_cc.outputs.cxx }}
-          CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET="14.0"
 
       - name: Build wheels mac-15
         if: contains( matrix.os, 'macos-15')
-        uses: pypa/cibuildwheel@v3.1.4
+        uses: pypa/cibuildwheel@v4.2.1
         env:
           CC: ${{ steps.install_cc.outputs.cc }}
           CXX: ${{ steps.install_cc.outputs.cxx }}
           CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET="15.0"
 
+      - name: Build wheels mac
+        if: contains( matrix.os, 'macos')
+        uses: pypa/cibuildwheel@v4.2.1
+        env:
+          CC: ${{ steps.install_cc.outputs.cc }}
+          CXX: ${{ steps.install_cc.outputs.cxx }}
+
       - name: Build wheels windows
         if: contains( matrix.os, 'windows')
-        uses: pypa/cibuildwheel@v3.1.4
+        uses: pypa/cibuildwheel@v4.2.1
           
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
           path: ./wheelhouse/*.whl
@@ -81,12 +80,12 @@ jobs:
     name: Build source distribution
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Build sdist
         run: pipx run build --sdist
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: cibw-sdist
           path: dist/*.tar.gz
@@ -102,7 +101,7 @@ jobs:
     # alternatively, to publish when a GitHub Release is created, use the following rule:
     if: github.event_name == 'release' && github.event.action == 'published'
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           # unpacks all CIBW artifacts into dist/
           pattern: cibw-*
