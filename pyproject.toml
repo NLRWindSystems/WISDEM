@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "wisdem"
-version = "4.2.6"
+version = "4.2.8"
 description = "Wind-Plant Integrated System Design & Engineering Model"
 readme = "README.md"
 requires-python = ">=3.11"
