@@ -21,10 +21,10 @@ jobs:
 
     steps:
       - name: checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Install conda/mamba
-        uses: conda-incubator/setup-miniconda@v3
+        uses: conda-incubator/setup-miniconda@v4
         # https://github.com/marketplace/actions/setup-miniconda
         with:
           # To use mamba, uncomment here, comment out the miniforge line
@@ -93,7 +93,7 @@ jobs:
     strategy:
       fail-fast: False
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest] #mac-13 intel, mac-latest is arm
+        os: [ubuntu-latest, windows-latest, macos-15-intel, macos-latest]
         python-version: ["3.13"]
 
     steps:
@@ -118,10 +118,10 @@ jobs:
             mingw-w64-x86_64-gcc-fortran
 
       - name: checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         id: cp
         with:
             python-version: ${{ matrix.python-version }}
