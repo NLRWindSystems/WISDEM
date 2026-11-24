@@ -439,7 +439,8 @@ int stodola (
 			i_ex = i;
 		}
 	    }
-	    u[i_ex] = 1.0;  u[i_ex+1] = 1.e-4;
+	    u[i_ex] = 1.0;
+	    if (i_ex < n) u[i_ex+1] = 1.e-4;
 	    d_old = d_max;
 
 	    vMv = xtAy ( u, M, u, n, d );		/* mass-normalize */
