@@ -2937,6 +2937,8 @@ class CylinderPostFrame(om.ExplicitComponent):
 
         else:
             # Use DNV-GL CP202 Method
+            # Note that the buckling length here is the mesh element length, when it should probably be the plate height / section length.
+            # This is a known compromise for consistency with OpenMDAO vector sizes with the Eurocode and other inputs/outputs
             check = util_dnvgl.CylinderBuckling(
                 h[:, 0],
                 d[:, 0],

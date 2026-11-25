@@ -5,7 +5,7 @@ import warnings
 
 class CylinderBuckling:
     """
-    Class for calculating cylinder buckling strengths based on DNVGL-RP-C2020.
+    Class for calculating cylinder buckling strengths based on DNV-RP-C202.
 
     Supports the following cylinder configurations:
     - Ring stiffened
@@ -299,10 +299,11 @@ class CylinderBuckling:
     def utilization_shell(self, _axial, _bending, _hoop, _shear):
         # Set Positive Stresses Equal to 0. See 3.2.4 - 3.2.6
         axial = np.abs(np.minimum(_axial, 0.0))
-        bending = np.abs(np.minimum(_bending, 0.0))
+        # Bending comes in as a vector magnitude and is always positive
+        bending = np.abs(_bending) #np.abs(np.minimum(_bending, 0.0))
         hoop = np.abs(np.minimum(_hoop, 0.0))
         shear = np.abs(_shear)
-
+        
         eps = 1e-7
         vm = self.von_mises(axial, hoop, shear) + eps
 
