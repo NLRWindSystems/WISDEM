@@ -201,11 +201,11 @@ class MonopileFrame(om.ExplicitComponent):
     turbine_M : numpy array[3], [N*m]
         Total turbine moment at tower base / transition piece
     Px : numpy array[n_full], [N/m]
-        force per unit length in x-direction
+        x-force per unit length in member c.s. (x-direction along element length)
     Py : numpy array[n_full], [N/m]
-        force per unit length in y-direction
+        y-force per unit length in member c.s. (x-direction along element length)
     Pz : numpy array[n_full], [N/m]
-        force per unit length in z-direction
+        z-force per unit length in member c.s. (x-direction along element length)
 
     Returns
     -------
@@ -548,10 +548,10 @@ class MonopileFrame(om.ExplicitComponent):
                     np.array([rna_M[2]]).flatten(),
                 )
 
-                # distributed loads: switch to local c.s.
-                Px = np.r_[inputs["Pz"][:, k], inputs["tower_Pz"][:, k]]
+                # distributed loads
+                Px = np.r_[inputs["Px"][:, k], inputs["tower_Px"][:, k]]
                 Py = np.r_[inputs["Py"][:, k], inputs["tower_Py"][:, k]]
-                Pz = -1.0 * np.r_[inputs["Px"][:, k], inputs["tower_Px"][:, k]]
+                Pz = np.r_[inputs["Pz"][:, k], inputs["tower_Pz"][:, k]]                
 
             else:
                 turb_F = inputs["turbine_F"][:, k]
@@ -567,7 +567,7 @@ class MonopileFrame(om.ExplicitComponent):
                 )
 
                 # distributed loads: switch to local c.s.
-                Px, Py, Pz = inputs["Pz"][:, k], inputs["Py"][:, k], -inputs["Px"][:, k]
+                Px, Py, Pz = inputs["Px"][:, k], inputs["Py"][:, k], inputs["Pz"][:, k]
 
             # trapezoidally distributed loads
             EL = element
