@@ -2953,7 +2953,7 @@ class CylinderPostFrame(om.ExplicitComponent):
 
             for k in range(n_dlc):
                 results = check.run_buckling_checks(
-                    Fz[:, k], M[:, k], axial_stress[:, k], hoop_stress[:, k], shear_stress[:, k]
+                    Fz[:, k], M[:, k], hoop_stress[:, k], shear_stress[:, k]
                 )
                 shell_buckling[:, k] = results["Shell"]
                 global_buckling[:, k] = results["Global"]

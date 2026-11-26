@@ -636,7 +636,7 @@ class JacketPost(om.ExplicitComponent):
         check = util_dnvgl.CylinderBuckling(h, d, t, E=E, G=G, sigma_y=sigy, gamma=gamma_f * gamma_b)
         for k in range(n_dlc):
             results = check.run_buckling_checks(
-                Fz[:, k], M[:, k], axial_stress[:, k], hoop_stress[:, k], shear_stress[:, k]
+                Fz[:, k], M[:, k], hoop_stress[:, k], shear_stress[:, k]
             )
 
             outputs["constr_shell_buckling"][:, k] = results["Shell"][:-n_legs]

@@ -294,7 +294,7 @@ class CylinderBuckling:
         return np.sqrt(a + 3.0 * (b + c))
 
     # Utilizations
-    def run_buckling_checks(self, Fz, M, sigma_x, sigma_h, sigma_t):
+    def run_buckling_checks(self, Fz, M, sigma_h, sigma_t):
         """
 
         Parameters
