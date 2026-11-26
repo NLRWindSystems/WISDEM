@@ -162,12 +162,20 @@ class CylinderBuckling:
 
     ## Buckling Coefficients
     # Ring Stiffened (unstiffened cylinder)
-    def _C_axial_bending_unstiffened(self):
+    def _C_axial_unstiffened(self):
         """See Section 3.4, Table 3-2."""
 
         psi = 1
         xi = 0.702 * self.Z
-        rho = 0.5 * (1 + self.r / (150 * self.t)) ** -0.5
+        rho = 0.5 * (1 + self.r / (150. * self.t)) ** -0.5
+        return psi * np.sqrt(1 + (rho * xi / psi) ** 2)
+
+    def _C_bending_unstiffened(self):
+        """See Section 3.4, Table 3-2."""
+
+        psi = 1
+        xi = 0.702 * self.Z
+        rho = 0.5 * (1 + self.r / (300. * self.t)) ** -0.5
         return psi * np.sqrt(1 + (rho * xi / psi) ** 2)
 
     def _C_torsion_unstiffened(self):
@@ -231,13 +239,23 @@ class CylinderBuckling:
     # Strength Calculations
     @property
     def fea(self):
-        """Characteristic buckling strength due to axial or bending loads."""
+        """Characteristic buckling strength due to axial loads."""
 
         if self._long:
             return self._shell_buckling_strength(self._C_axial_longitudinal())
 
         else:
-            return self._shell_buckling_strength(self._C_axial_bending_unstiffened())
+            return self._shell_buckling_strength(self._C_axial_unstiffened())
+
+    @property
+    def fem(self):
+        """Characteristic buckling strength due to bending loads."""
+
+        if self._long:
+            return self._shell_buckling_strength(self._C_axial_longitudinal())
+
+        else:
+            return self._shell_buckling_strength(self._C_bending_unstiffened())
 
     @property
     def fet(self):
@@ -305,9 +323,9 @@ class CylinderBuckling:
         shear = np.abs(_shear)
         
         eps = 1e-7
-        vm = self.von_mises(axial, hoop, shear) + eps
+        vm = self.von_mises(axial + bending, hoop, shear) + eps
 
-        lambda_s = np.sqrt((self.sigma_y / vm) * ((axial + bending) / self.fea + shear / self.fet + hoop / self.feh))
+        lambda_s = np.sqrt((self.sigma_y / vm) * (axial / self.fea + bending / self.fem + hoop / self.feh + shear / self.fet))
 
         # Use DNV gamma unless specified by user
         gamma_m = 0.85 + 0.6 * lambda_s
@@ -323,10 +341,22 @@ class CylinderBuckling:
         return shell_util
 
     def get_fak(self, axial, bending, hoop, shear):
+        # Find the maximum axial stress where shell buckling occurs (according the DNV standard) given the current bending, hoop, shear
 
+        # Using mean here instead of min for more stable performance in an optimization
+        hoop_m    = np.mean(hoop)
+        bending_m = np.mean(bending)
+        shear_m   = np.mean(shear)
+        
+        # DNV's analytical solution for simple cases is our starting point
+        a = 1 + (self.sigma_y / self.fea)**2
+        b = hoop_m * (2 * self.sigma_y**2 / self.fea / self.feh - 1.0)
+        c = hoop_m**2 + (self.sigma_y * hoop_m / self.feh)**2 - self.sigma_y**2
+        axial_max0 = (b + np.sqrt(b**2 - 4*a*c)) / (2*a)
+        
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
-            fak = fsolve(self._fak_wrapper, -np.abs(axial), args=(bending, hoop, shear), xtol=1e-4, maxfev=50)
+            fak = fsolve(self._fak_wrapper, -axial_max0, args=(bending_m, hoop_m, shear_m), xtol=1e-2, maxfev=200)
 
         # Using mean instead of min here for more stable performance in optimization
         return np.abs(fak).mean()
