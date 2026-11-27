@@ -99,7 +99,7 @@ jobs:
     steps:
       - name: Setup GNU Fortran
         if: false == contains( matrix.os, 'windows')
-        uses: awvwgk/setup-fortran@v1
+        uses: fortran-lang/setup-fortran@v1
 
       - name: Install compiler
         if: false == contains( matrix.os, 'windows')

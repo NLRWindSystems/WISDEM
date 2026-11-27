@@ -629,9 +629,7 @@ class FloatingPost(om.ExplicitComponent):
                                             sigma_y=sigy[circ_idx], gamma=gamma_f * gamma_b,
                                             A=Az[circ_idx], I=Iyy[circ_idx])
             for k in range(n_dlc):
-                results = circ_check.run_buckling_checks(
-                    Fz[k, :], M[k, :], circ_axial_stress[k, :], hoop_stress[k, :], circ_shear_stress[k, :]
-                )
+                results = circ_check.run_buckling_checks(Fz[k, :], M[k, :], hoop_stress[k, :], circ_shear_stress[k, :])
 
                 outputs["constr_platform_shell_buckling"][[circ_idx], k] = results["Shell"]
                 outputs["constr_platform_global_buckling"][[circ_idx], k] = results["Global"]
