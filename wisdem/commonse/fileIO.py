@@ -1,5 +1,6 @@
 import os
-import pickle
+import warnings
+#import pickle
 import openmdao
 import numpy as np
 import pandas as pd
@@ -128,7 +129,13 @@ def save_data(fname, prob, npz_file=True, mat_file=False, xls_file=True):
         sio.savemat(froot + ".mat", array_dict, long_field_names=True)
 
     if xls_file:
-        df.to_excel(froot + ".xlsx", index=False)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message="Cell contents too long.*",
+                category=UserWarning
+            )
+            df.to_excel(froot + ".xlsx", index=False)
         df.to_csv(froot + ".csv", index=False)
 
 
