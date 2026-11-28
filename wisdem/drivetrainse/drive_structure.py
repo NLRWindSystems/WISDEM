@@ -703,10 +703,14 @@ class Nose_Stator_Bedplate_Frame(om.ExplicitComponent):
         Force vector applied to bearing 1 in hub c.s.
     F_mb2 : numpy array[3, n_dlcs], [N]
         Force vector applied to bearing 2 in hub c.s.
+    F_torq : numpy array[3, n_dlcs], [N]
+        Force vector applied to generator rotor (direct) or gearbox (geared) in hub c.s.
     M_mb1 : numpy array[3, n_dlcs], [N*m]
         Moment vector applied to bearing 1 in hub c.s.
     M_mb2 : numpy array[3, n_dlcs], [N*m]
         Moment vector applied to bearing 2 in hub c.s.
+    M_torq : numpy array[3, n_dlcs], [N*m]
+        Moment vector applied to generator rotor (direct) or gearbox (geared) in hub c.s.
     other_mass : float, [kg]
         Mass of other nacelle components that rest on mainplate
     bedplate_E : float, [Pa]
@@ -784,8 +788,10 @@ class Nose_Stator_Bedplate_Frame(om.ExplicitComponent):
         self.add_input("generator_stator_I", val=np.zeros(3), units="kg*m**2")
         self.add_input("F_mb1", val=np.zeros((3, n_dlcs)), units="N")
         self.add_input("F_mb2", val=np.zeros((3, n_dlcs)), units="N")
+        self.add_input("F_torq", val=np.zeros((3, n_dlcs)), units="N")
         self.add_input("M_mb1", val=np.zeros((3, n_dlcs)), units="N*m")
         self.add_input("M_mb2", val=np.zeros((3, n_dlcs)), units="N*m")
+        self.add_input("M_torq", val=np.zeros((3, n_dlcs)), units="N*m")
         self.add_input("other_mass", val=0.0, units="kg")
         self.add_input("bedplate_E", val=0.0, units="Pa")
         self.add_input("bedplate_G", val=0.0, units="Pa")
@@ -857,8 +863,10 @@ class Nose_Stator_Bedplate_Frame(om.ExplicitComponent):
 
         F_mb1 = inputs["F_mb1"]
         F_mb2 = inputs["F_mb2"]
+        F_torq = inputs["F_torq"]
         M_mb1 = inputs["M_mb1"]
         M_mb2 = inputs["M_mb2"]
+        M_torq = inputs["M_torq"]
 
         m_other = float(inputs["other_mass"][0])
         stator_defl_allow = float(inputs["stator_deflection_allowable"][0])
@@ -945,9 +953,10 @@ class Nose_Stator_Bedplate_Frame(om.ExplicitComponent):
             load = frame3dd.StaticLoadCase(gx, gy, gz)
 
             # point loads
-            F_12 = np.c_[F_mb2[:, k], F_mb1[:, k]]
-            M_12 = np.c_[M_mb2[:, k], M_mb1[:, k]]
-            load.changePointLoads(np.r_[i2, i1], F_12[0, :], F_12[1, :], F_12[2, :], M_12[0, :], M_12[1, :], M_12[2, :])
+            i_pt = np.r_[istator, i2, i1]
+            F_pt = np.c_[F_torq[:, k], F_mb2[:, k], F_mb1[:, k]]
+            M_pt = np.c_[M_torq[:, k], M_mb2[:, k], M_mb1[:, k]]
+            load.changePointLoads(i_pt, F_pt[0, :], F_pt[1, :], F_pt[2, :], M_pt[0, :], M_pt[1, :], M_pt[2, :])
             # -----------------------------------
 
             # Put all together and run
