@@ -150,11 +150,11 @@ class TowerFrame(om.ExplicitComponent):
     rna_M : numpy array[3], [N*m]
         rna moment at tower top from drivetrain analysis
     Px : numpy array[n_full], [N/m]
-        force per unit length in x-direction
+        x-force per unit length in member c.s. (x-direction along element length)
     Py : numpy array[n_full], [N/m]
-        force per unit length in y-direction
+        y-force per unit length in member c.s. (x-direction along element length)
     Pz : numpy array[n_full], [N/m]
-        force per unit length in z-direction
+        z-force per unit length in member c.s. (x-direction along element length)
 
     Returns
     -------
@@ -340,7 +340,7 @@ class TowerFrame(om.ExplicitComponent):
             )
 
             # distributed loads
-            Px, Py, Pz = inputs["Pz"][:, k], inputs["Py"][:, k], -inputs["Px"][:, k]  # switch to local c.s.
+            Px, Py, Pz = inputs["Px"][:, k], inputs["Py"][:, k], inputs["Pz"][:, k]
 
             # trapezoidally distributed loads
             EL = np.arange(1, n)
