@@ -132,8 +132,10 @@ class TestDirectStructure(unittest.TestCase):
         self.inputs["tilt"] = np.array([0.0])
         self.inputs["F_mb1"] = np.zeros(3).reshape((3, 1))
         self.inputs["F_mb2"] = np.zeros(3).reshape((3, 1))
+        self.inputs["F_torq"] = np.zeros(3).reshape((3, 1))
         self.inputs["M_mb1"] = np.zeros(3).reshape((3, 1))
         self.inputs["M_mb2"] = np.zeros(3).reshape((3, 1))
+        self.inputs["M_torq"] = np.zeros(3).reshape((3, 1))
         self.compute_layout()
         myobj = ds.Nose_Stator_Bedplate_Frame(modeling_options=self.opt, n_dlcs=1)
         myobj.compute(self.inputs, self.outputs, self.discrete_inputs, self.discrete_outputs)
@@ -163,6 +165,12 @@ class TestDirectStructure(unittest.TestCase):
         npt.assert_almost_equal(self.outputs["base_F"][2], F0[2] - 500e3 * gravity)
         npt.assert_almost_equal(self.outputs["base_M"], M0 + self.inputs["M_mb1"] + self.inputs["M_mb2"], decimal=-1)
 
+        self.inputs["M_torq"] = 30e3 * np.arange(1, 4).reshape((3, 1))
+        myobj.compute(self.inputs, self.outputs, self.discrete_inputs, self.discrete_outputs)
+        npt.assert_almost_equal(self.outputs["base_F"][:2], 0.0)
+        npt.assert_almost_equal(self.outputs["base_F"][2], F0[2] - 500e3 * gravity)
+        npt.assert_almost_equal(self.outputs["base_M"], M0 + self.inputs["M_mb1"] + self.inputs["M_mb2"] + self.inputs["M_torq"], decimal=-1)
+
         self.inputs["F_mb1"] = np.array([30e2, 40e2, 50e2]).reshape((3, 1))
         self.inputs["F_mb2"] = np.array([30e2, 40e2, 50e2]).reshape((3, 1))
         myobj.compute(self.inputs, self.outputs, self.discrete_inputs, self.discrete_outputs)
@@ -173,8 +181,10 @@ class TestDirectStructure(unittest.TestCase):
         self.inputs["tilt"] = np.array([5.0])
         self.inputs["F_mb1"] = np.zeros(3).reshape((3, 1))
         self.inputs["F_mb2"] = np.zeros(3).reshape((3, 1))
+        self.inputs["F_torq"] = np.zeros(3).reshape((3, 1))
         self.inputs["M_mb1"] = np.zeros(3).reshape((3, 1))
         self.inputs["M_mb2"] = np.zeros(3).reshape((3, 1))
+        self.inputs["M_torq"] = np.zeros(3).reshape((3, 1))
         self.compute_layout()
         myobj = ds.Nose_Stator_Bedplate_Frame(modeling_options=self.opt, n_dlcs=1)
         myobj.compute(self.inputs, self.outputs, self.discrete_inputs, self.discrete_outputs)
@@ -206,6 +216,14 @@ class TestDirectStructure(unittest.TestCase):
             self.outputs["base_M"][1], M0[1] + self.inputs["M_mb1"][1] + self.inputs["M_mb2"][1], decimal=-1
         )
 
+        self.inputs["M_torq"] = 30e3 * np.arange(1, 4).reshape((3, 1))
+        myobj.compute(self.inputs, self.outputs, self.discrete_inputs, self.discrete_outputs)
+        npt.assert_almost_equal(self.outputs["base_F"][:2], 0.0, decimal=2)
+        npt.assert_almost_equal(self.outputs["base_F"][2], F0[2] - 500e3 * gravity)
+        npt.assert_almost_equal(
+            self.outputs["base_M"][1], M0[1] + self.inputs["M_mb1"][1] + self.inputs["M_mb2"][1] + self.inputs["M_torq"][1], decimal=-1
+        )
+
         self.inputs["F_mb1"] = np.array([30e2, 40e2, 50e2]).reshape((3, 1))
         self.inputs["F_mb2"] = np.array([30e2, 40e2, 50e2]).reshape((3, 1))
         myobj.compute(self.inputs, self.outputs, self.discrete_inputs, self.discrete_outputs)
@@ -216,8 +234,10 @@ class TestDirectStructure(unittest.TestCase):
         self.discrete_inputs["upwind"] = False
         self.inputs["F_mb1"] = np.zeros(3).reshape((3, 1))
         self.inputs["F_mb2"] = np.zeros(3).reshape((3, 1))
+        self.inputs["F_torq"] = np.zeros(3).reshape((3, 1))
         self.inputs["M_mb1"] = np.zeros(3).reshape((3, 1))
         self.inputs["M_mb2"] = np.zeros(3).reshape((3, 1))
+        self.inputs["M_torq"] = np.zeros(3).reshape((3, 1))
         self.compute_layout()
         myobj = ds.Nose_Stator_Bedplate_Frame(modeling_options=self.opt, n_dlcs=1)
         myobj.compute(self.inputs, self.outputs, self.discrete_inputs, self.discrete_outputs)
@@ -247,6 +267,12 @@ class TestDirectStructure(unittest.TestCase):
         npt.assert_almost_equal(self.outputs["base_F"][2], F0[2] - 500e3 * gravity)
         npt.assert_almost_equal(self.outputs["base_M"], M0 + self.inputs["M_mb1"] + self.inputs["M_mb2"], decimal=-1)
 
+        self.inputs["M_torq"] = 30e3 * np.arange(1, 4).reshape((3, 1))
+        myobj.compute(self.inputs, self.outputs, self.discrete_inputs, self.discrete_outputs)
+        npt.assert_almost_equal(self.outputs["base_F"][:2], 0.0)
+        npt.assert_almost_equal(self.outputs["base_F"][2], F0[2] - 500e3 * gravity)
+        npt.assert_almost_equal(self.outputs["base_M"], M0 + self.inputs["M_mb1"] + self.inputs["M_mb2"] + self.inputs["M_torq"], decimal=-1)
+
         self.inputs["F_mb1"] = np.array([30e2, 40e2, 50e2]).reshape((3, 1))
         self.inputs["F_mb2"] = np.array([30e2, 40e2, 50e2]).reshape((3, 1))
         myobj.compute(self.inputs, self.outputs, self.discrete_inputs, self.discrete_outputs)
@@ -258,8 +284,10 @@ class TestDirectStructure(unittest.TestCase):
         self.discrete_inputs["upwind"] = False
         self.inputs["F_mb1"] = np.zeros(3).reshape((3, 1))
         self.inputs["F_mb2"] = np.zeros(3).reshape((3, 1))
+        self.inputs["F_torq"] = np.zeros(3).reshape((3, 1))
         self.inputs["M_mb1"] = np.zeros(3).reshape((3, 1))
         self.inputs["M_mb2"] = np.zeros(3).reshape((3, 1))
+        self.inputs["M_torq"] = np.zeros(3).reshape((3, 1))
         self.compute_layout()
         myobj = ds.Nose_Stator_Bedplate_Frame(modeling_options=self.opt, n_dlcs=1)
         myobj.compute(self.inputs, self.outputs, self.discrete_inputs, self.discrete_outputs)
@@ -289,6 +317,14 @@ class TestDirectStructure(unittest.TestCase):
         npt.assert_almost_equal(self.outputs["base_F"][2], F0[2] - 500e3 * gravity)
         npt.assert_almost_equal(
             self.outputs["base_M"][1], M0[1] + self.inputs["M_mb1"][1] + self.inputs["M_mb2"][1], decimal=-1
+        )
+
+        self.inputs["M_torq"] = 30e3 * np.arange(1, 4).reshape((3, 1))
+        myobj.compute(self.inputs, self.outputs, self.discrete_inputs, self.discrete_outputs)
+        npt.assert_almost_equal(self.outputs["base_F"][:2], 0.0, decimal=2)
+        npt.assert_almost_equal(self.outputs["base_F"][2], F0[2] - 500e3 * gravity)
+        npt.assert_almost_equal(
+            self.outputs["base_M"][1], M0[1] + self.inputs["M_mb1"][1] + self.inputs["M_mb2"][1] + self.inputs["M_torq"][1], decimal=-1
         )
 
         self.inputs["F_mb1"] = np.array([30e2, 40e2, 50e2]).reshape((3, 1))
